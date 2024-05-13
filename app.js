@@ -1,6 +1,10 @@
+const express = require("express");
 require("dotenv").config();
 require("express-async-errors");
-const express = require("express");
+const rateLimitter = require("express-rate-limit");
+const xss = require("xss-clean");
+const helmet = require("helmet");
+const cors = require("cors");
 const app = express();
 
 // error handler
@@ -12,8 +16,17 @@ const connectDB = require("./db/connect");
 const authMiddleware = require("./middleware/authentication");
 
 app.use(express.json());
-// extra packages
 
+// security setup
+app.use(
+  rateLimitter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 100,
+  })
+);
+app.use(helmet());
+app.use(cors());
+app.use(xss());
 // routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/jobs", authMiddleware, jobsRouter);
